@@ -6,21 +6,10 @@
   <title>Accessible Web Page Assistant</title>
   <style>
     :root {
-      --ink: #14213d;        /* dark navy: editor panel, headings */
-      --ink-2: #1f3057;
-      --paper: #f4f6fa;      /* page background */
-      --card: #ffffff;
-      --line: #d5dbe6;
-      --text: #1a2233;
-      --muted: #55617a;
-      --high: #b3261e;
-      --high-bg: #fdecea;
-      --med: #8a5300;
-      --med-bg: #fff3dc;
-      --low: #31507a;
-      --low-bg: #e8eff9;
-      --pass: #17694b;
-      --mark: #ffd84d;       /* highlighter yellow: focus + selection */
+      --ink: #14213d; --ink-2: #1f3057; --paper: #f4f6fa; --card: #ffffff; --line: #d5dbe6;
+      --text: #1a2233; --muted: #55617a;
+      --high: #b3261e; --high-bg: #fdecea; --med: #8a5300; --med-bg: #fff3dc; --low: #31507a; --low-bg: #e8eff9;
+      --pass: #17694b; --pass-bg: #e3f4ec; --mark: #ffd84d;
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       --mono: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
@@ -31,42 +20,32 @@
     ::selection { background: var(--mark); color: #000; }
     :focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; box-shadow: 0 0 0 5px var(--ink); }
 
-    /* ---------- layout ---------- */
     .shell { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); min-height: 100vh; }
     .editor { background: var(--ink); color: #e8edf7; padding: 2rem 1.5rem; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 1rem; }
-    .report { padding: 2rem clamp(1rem, 3vw, 2.5rem); }
-    @media (max-width: 899px) {
-      .shell { grid-template-columns: 1fr; }
-      .editor { position: static; height: auto; }
-      textarea { min-height: 16rem; }
-    }
+    .report { padding: 2rem clamp(1rem, 3vw, 2.5rem); min-width: 0; }
+    @media (max-width: 899px) { .shell { grid-template-columns: 1fr; } .editor { position: static; height: auto; } textarea#html-input { min-height: 16rem; } }
 
-    /* ---------- editor panel ---------- */
     h1 { font: 700 1.9rem/1.15 var(--serif); margin: 0; letter-spacing: -.01em; }
     .lede { margin: 0; color: #b6c2dc; max-width: 34rem; }
     .editor label { font-weight: 600; }
-    textarea {
+    textarea#html-input {
       flex: 1; min-height: 12rem; width: 100%; resize: vertical;
       background: #0d1830; color: #dfe8fb; border: 1px solid #34466f; border-radius: 8px;
       font: .88rem/1.5 var(--mono); padding: .9rem; tab-size: 2;
     }
-    textarea::placeholder { color: #7c8bad; }
+    textarea#html-input::placeholder { color: #7c8bad; }
     .actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
     button { font: 600 1rem var(--sans); cursor: pointer; border-radius: 8px; padding: .6rem 1.1rem; border: 2px solid transparent; }
-    .btn-primary { background: var(--mark); color: #1a1500; }
-    .btn-primary:hover { background: #ffe273; }
-    .btn-ghost { background: transparent; color: #e8edf7; border-color: #4a5d88; }
-    .btn-ghost:hover { background: var(--ink-2); }
-    button:disabled { opacity: .6; cursor: wait; }
+    .btn-primary { background: var(--mark); color: #1a1500; } .btn-primary:hover { background: #ffe273; }
+    .btn-ghost { background: transparent; color: #e8edf7; border-color: #4a5d88; } .btn-ghost:hover { background: var(--ink-2); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
     .hint { color: #93a3c4; font-size: .85rem; margin: 0; }
 
-    /* ---------- report: empty state ---------- */
     .empty { max-width: 34rem; margin: 12vh auto 0; text-align: center; color: var(--muted); }
     .empty h2 { font: 700 1.5rem var(--serif); color: var(--text); margin: 0 0 .5rem; }
     .checks { display: grid; gap: .5rem; text-align: left; margin: 1.5rem auto 0; padding: 0; list-style: none; max-width: 26rem; }
     .checks li { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .8rem; }
 
-    /* ---------- report: summary ---------- */
     .summary { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.25rem 1.5rem; }
     .gauge { position: relative; width: 150px; flex: none; }
     .gauge svg { display: block; width: 100%; height: auto; }
@@ -84,7 +63,33 @@
     .chip[data-sev="high"] .sym { color: var(--high); } .chip[data-sev="medium"] .sym { color: var(--med); } .chip[data-sev="low"] .sym { color: var(--low); }
     .chip[aria-pressed="true"] .sym { color: var(--mark); }
 
-    /* ---------- report: findings ---------- */
+    /* ---------- fix & recheck panel ---------- */
+    .fixpanel { margin-top: 1rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.25rem; }
+    .fixpanel h2 { font: 700 1.15rem var(--serif); margin: 0 0 .25rem; }
+    .fixpanel .sub { margin: 0 0 .75rem; color: var(--muted); font-size: .92rem; }
+    .stats { display: flex; flex-wrap: wrap; gap: .6rem; margin: .5rem 0; }
+    .stat { border: 1px solid var(--line); border-radius: 8px; padding: .35rem .8rem; min-width: 7rem; }
+    .stat b { display: block; font: 700 1.5rem/1.2 var(--serif); }
+    .stat span { font-size: .82rem; color: var(--muted); }
+    .stat.ok b { color: var(--pass); } .stat.warn b { color: var(--med); } .stat.bad b { color: var(--high); }
+    .note { margin: .5rem 0; padding: .5rem .75rem; border-radius: 8px; background: var(--low-bg); color: var(--low); font-weight: 600; }
+    .note.good { background: var(--pass-bg); color: var(--pass); } .note.bad { background: var(--high-bg); color: var(--high); }
+    .panel-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+    .btn-sm { font-size: .92rem; padding: .4rem .85rem; background: #fff; color: var(--ink); border: 2px solid var(--ink); }
+    .btn-sm:hover { background: #eef1f8; }
+    details.resolved { margin-top: .6rem; }
+    details.resolved summary, details.compare summary { cursor: pointer; font-weight: 600; }
+    ul.done { list-style: none; padding: 0; margin: .5rem 0 0; display: grid; gap: .35rem; }
+    ul.done li { background: var(--pass-bg); color: var(--pass); border-radius: 6px; padding: .3rem .6rem; }
+    ul.done li::before { content: "✓ "; font-weight: 700; }
+
+    .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .6rem; }
+    @media (max-width: 1099px) { .cmp { grid-template-columns: 1fr; } }
+    .cmp .pane pre { max-height: 22rem; overflow: auto; padding: .4rem 0; }
+    .ln { display: block; padding: 0 .6rem; min-height: 1.45em; white-space: pre-wrap; word-break: break-word; }
+    .ln.del { background: var(--high-bg); } .ln.add { background: var(--pass-bg); }
+
+    /* ---------- findings ---------- */
     .list-head { font: 700 1.2rem var(--serif); margin: 1.75rem 0 .75rem; }
     ol.findings { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
     .finding { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.25rem 1.1rem; border-left: 8px solid var(--low); }
@@ -93,20 +98,31 @@
     .f-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .35rem; }
     .badge { font: 700 .8rem var(--sans); border-radius: 6px; padding: .15rem .5rem; }
     .badge.high { background: var(--high-bg); color: var(--high); } .badge.medium { background: var(--med-bg); color: var(--med); } .badge.low { background: var(--low-bg); color: var(--low); }
+    .badge.new { background: var(--ink); color: var(--mark); }
     .cat { font-size: .85rem; color: var(--muted); }
     .finding h3 { font: 700 1.1rem/1.3 var(--serif); margin: 0 0 .3rem; }
     .finding p { margin: 0 0 .5rem; max-width: 62ch; }
-    .wcag { font-size: .82rem; color: var(--muted); }
     .diff { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin: .75rem 0; }
     @media (max-width: 1099px) { .diff { grid-template-columns: 1fr; } }
     .pane { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
     .pane header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: .85rem; padding: .3rem .6rem; }
     .pane.before header { background: var(--high-bg); color: var(--high); }
-    .pane.after header { background: #e3f4ec; color: var(--pass); }
+    .pane.after header { background: var(--pass-bg); color: var(--pass); }
+    .pane.neutral header { background: #eceff6; color: var(--ink); }
     .pane pre { margin: 0; padding: .6rem; background: #f8f9fc; font: .82rem/1.45 var(--mono); white-space: pre-wrap; word-break: break-word; }
     .copy { font-size: .8rem; padding: .1rem .55rem; background: #fff; color: var(--pass); border: 1px solid var(--pass); }
-    .btn-ai { background: var(--ink); color: #fff; font-size: .92rem; padding: .45rem .9rem; }
-    .btn-ai:hover { background: var(--ink-2); }
+    .fixrow { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-top: .25rem; }
+    .field { display: grid; gap: .2rem; flex: 1 1 16rem; min-width: 0; }
+    .field label { font-weight: 600; font-size: .88rem; }
+    .field input, .field textarea { font: 1rem var(--sans); padding: .45rem .6rem; border: 2px solid var(--line); border-radius: 6px; width: 100%; }
+    .field textarea { min-height: 6rem; resize: vertical; }
+    .btn-apply { background: var(--pass); color: #fff; padding: .5rem 1rem; }
+    .btn-apply:hover { background: #12563d; }
+    .btn-ai { background: var(--ink); color: #fff; font-size: .92rem; padding: .45rem .9rem; } .btn-ai:hover { background: var(--ink-2); }
+    .btn-alt { background: #fff; color: var(--ink); border: 2px solid var(--ink); font-size: .92rem; padding: .4rem .85rem; }
+    .err { margin-top: .5rem; color: var(--high); font-weight: 600; }
+    .err:empty { display: none; }
+    .blocked { margin: .5rem 0 0; padding: .5rem .75rem; background: var(--med-bg); color: var(--med); border-radius: 6px; }
     .ai-out { margin-top: .75rem; padding: .75rem 1rem; background: #eef2ff; border: 1px solid #c3cff5; border-radius: 8px; white-space: pre-wrap; }
     .ai-out::before { content: "AI suggestion"; display: block; font-weight: 700; font-size: .8rem; color: var(--low); margin-bottom: .25rem; }
 
@@ -120,15 +136,15 @@
   <div class="shell">
     <section class="editor" aria-label="HTML input">
       <h1>Accessible Web Page Assistant</h1>
-      <p class="lede">Paste a page's HTML and get a prioritised audit of missing alt text, unlabeled fields, heading problems and hard-to-read text.</p>
-      <label for="html-input">HTML source</label>
+      <p class="lede">Paste a page's HTML, apply the suggested fixes, and recheck the result.</p>
+      <label for="html-input">HTML being analyzed</label>
       <textarea id="html-input" spellcheck="false" placeholder="&lt;h1&gt;Paste your HTML here&lt;/h1&gt;"></textarea>
       <div class="actions">
         <button id="analyze" type="button" class="btn-primary">Analyze page</button>
         <button id="sample" type="button" class="btn-ghost">Load sample page</button>
         <button id="clear" type="button" class="btn-ghost">Clear</button>
       </div>
-      <p class="hint">Your HTML is checked in the browser. Only an issue's snippet is sent out, and only when you click an AI button.</p>
+      <p class="hint">Applying a fix edits this HTML. The original is kept for comparison, and Analyze page always starts a new session.</p>
     </section>
 
     <main class="report" id="report" tabindex="-1">
@@ -166,7 +182,36 @@
           </div>
         </div>
 
-        <h2 class="list-head" id="list-head">Issues, most important first</h2>
+        <section class="fixpanel" id="fixpanel" aria-labelledby="fix-h">
+          <h2 id="fix-h">Fix and recheck</h2>
+          <p class="sub">Apply a fix on any issue below, or edit the HTML yourself and press Recheck. Every recheck re-analyzes the HTML in the editor.</p>
+          <div id="stats" class="stats" hidden>
+            <div class="stat ok"><b id="p-resolved">0</b><span>resolved</span></div>
+            <div class="stat warn"><b id="p-remaining">0</b><span>remaining</span></div>
+            <div class="stat bad" id="stat-new" hidden><b id="p-new">0</b><span>new</span></div>
+            <div class="stat"><b id="p-score">0 → 0</b><span>score</span></div>
+          </div>
+          <p id="p-note" class="note" role="status" hidden></p>
+          <details id="resolved-box" class="resolved" hidden>
+            <summary id="resolved-sum">Resolved issues</summary>
+            <ul id="resolved-list" class="done"></ul>
+          </details>
+          <div class="panel-actions">
+            <button type="button" id="recheck" class="btn-sm">Recheck editor HTML</button>
+            <button type="button" id="reset" class="btn-sm">Restore original</button>
+            <button type="button" id="copy-mod" class="btn-sm">Copy modified HTML</button>
+          </div>
+          <details id="compare" class="compare resolved" hidden>
+            <summary>Compare original with modified</summary>
+            <p class="sub">Red lines were removed or changed, green lines were added or changed. Fixing re-serializes the HTML, so minor formatting such as quote style can differ.</p>
+            <div class="cmp">
+              <div class="pane neutral"><header><span>Original (as pasted)</span></header><pre id="cmp-orig"></pre></div>
+              <div class="pane neutral"><header><span>Modified (being analyzed)</span></header><pre id="cmp-mod"></pre></div>
+            </div>
+          </details>
+        </section>
+
+        <h2 class="list-head" id="list-head">Issues still to fix, most important first</h2>
         <ol id="findings" class="findings" aria-labelledby="list-head"></ol>
         <div id="allclear" class="allclear" hidden>
           <h3>No issues found</h3>
